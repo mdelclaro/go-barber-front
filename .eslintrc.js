@@ -37,11 +37,11 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     'jsx-a11y/control-has-associated-label': 'off',
   },
-  // settings: {
-  //   'import/resolver': {
-  //     'babel-plugin-root-import': {
-  //       rootPathSuffix: 'src',
-  //     },
-  //   },
-  // },
+  settings: {
+    'import/resolver': {
+      'babel-plugin-root-import': {
+        rootPathSuffix: 'src',
+      },
+    },
+  },
 };
