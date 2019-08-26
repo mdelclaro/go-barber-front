@@ -14,7 +14,6 @@ export default function AvatarInput() {
   const ref = useRef();
 
   useEffect(() => {
-    console.log(ref);
     if (ref.current) {
       registerField({
         name: 'avatar_id',
