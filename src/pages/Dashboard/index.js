@@ -1,15 +1,56 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
-import { format, subDays, addDays } from 'date-fns';
+import {
+  format,
+  subDays,
+  addDays,
+  setHours,
+  setMinutes,
+  setSeconds,
+  isBefore,
+  isEqual,
+  parseISO,
+} from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 
 import api from '~/services/api';
 
 import { Container, Time } from './styles';
 
+const range = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+
 export default function Dashboard() {
+  const [schedule, setSchedule] = useState([]);
   const [date, setDate] = useState(new Date());
 
   const dateFormatted = useMemo(() => format(date, 'MMMM do'), [date]);
+
+  useEffect(() => {
+    async function loadSchedule() {
+      const response = await api.get('schedule', {
+        params: { date },
+      });
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const data = range.map(hour => {
+        const checkDate = setSeconds(setMinutes(setHours(date, hour), 0), 0);
+        const compareDate = utcToZonedTime(checkDate, timezone);
+
+        return {
+          time: `${hour}:00h`,
+          past: isBefore(compareDate, new Date()),
+          appointment: response.data.find(a =>
+            isEqual(parseISO(a.date), compareDate),
+          ),
+        };
+      });
+
+      setSchedule(data);
+    }
+
+    loadSchedule();
+  }, [date]);
 
   function handlePrevDay() {
     setDate(subDays(date, 1));
@@ -32,22 +73,14 @@ export default function Dashboard() {
       </header>
 
       <ul>
-        <Time past>
-          <strong>08:00am</strong>
-          <span>Fulano Ashad</span>
-        </Time>
-        <Time available>
-          <strong>09:00am</strong>
-          <span>Available</span>
-        </Time>
-        <Time>
-          <strong>10:00am</strong>
-          <span>Fulano Ashad</span>
-        </Time>
-        <Time>
-          <strong>11:00am</strong>
-          <span>Fulano Ashad</span>
-        </Time>
+        {schedule.map(time => (
+          <Time key={time.time} past={time.past} available={!time.appointment}>
+            <strong>{time.time}</strong>
+            <span>
+              {time.appointment ? time.appointment.user.name : 'No appointment'}
+            </span>
+          </Time>
+        ))}
       </ul>
     </Container>
   );
